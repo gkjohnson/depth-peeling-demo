@@ -1,4 +1,4 @@
-# three-depth-peeling-demo
+# depth-peeling-demo
 
 Demonstration of [depth peeling](https://developer.download.nvidia.com/assets/gamedev/docs/OrderIndependentTransparency.pdf) in three.js in support for adding re-assignable depth buffers for render targets.
 

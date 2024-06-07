@@ -1,8 +1,10 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 let camera, scene, renderer, controls;
 let depthTexture, depthTexture2, opaqueDepthTexture;
@@ -18,19 +20,20 @@ const DEPTH_BUFFER = true;
 const params = {
 
     useDepthPeeling: true,
-    layers: 3,
+    layers: 5,
+    opacity: 0.5,
     doubleSided: true,
 
 };
 
 init();
 
-function init() {
+async function init() {
 
     infoContainer = document.getElementById( 'info' );
 
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
-    camera.position.set( 0, 0, 10 );
+    camera.position.set( 3, 3, 3 );
 
     scene = new THREE.Scene();
 
@@ -38,12 +41,14 @@ function init() {
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setAnimationLoop( animate );
-    renderer.setClearColor( 0, 1 );
+    renderer.setClearColor( 0x333333, 1 );
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
     document.body.appendChild( renderer.domElement );
 
     controls = new OrbitControls( camera, renderer.domElement );
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1;
 
     // set up textures
     depthTexture = new THREE.DepthTexture( 1, 1, THREE.FloatType );
@@ -61,58 +66,66 @@ function init() {
         samples: SAMPLES,
     } );
 
+    console.log( compositeTarget.texture.colorSpace )
+
 
     // set up quad
     copyQuad = new FullScreenQuad( new THREE.MeshBasicMaterial() );
 
     // set up scene
-    const light = new THREE.DirectionalLight( 0xffffff, 3 );
+    const light = new THREE.DirectionalLight( 0xffffff, 2 );
     light.position.set( 1, 2, 3 );
 
-    const ambLight = new THREE.AmbientLight( 0xffffff, 0.5 );
+    const ambLight = new THREE.AmbientLight( 0xffffff, 0.25 );
 
     transparentGroup = new THREE.Group();
     opaqueGroup = new THREE.Group();
     scene.add( transparentGroup, opaqueGroup, light, ambLight );
 
-    const sphereGeometry = new THREE.SphereGeometry();
-    {
+    const DepthPeelMaterial = DepthPeelMaterialMixin( THREE.MeshStandardMaterial );
+    await new GLTFLoader()
+        .setMeshoptDecoder( MeshoptDecoder )
+        .loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/drone/drone.glb' )
+        .then( gltf => {
 
-        const mesh = new THREE.Mesh( sphereGeometry, new THREE.MeshStandardMaterial() );
-        mesh.scale.setScalar( 0.5 );
-        opaqueGroup.add( mesh );
+            gltf.scene.scale.setScalar( 10 );
+            gltf.scene.updateMatrixWorld();
 
-    }
+            const opaqueObjects = [];
+            gltf.scene.traverse( c => {
 
-    {
+                if ( c.material ) {
 
-        const DepthPeelMaterial = DepthPeelMaterialMixin( THREE.MeshStandardMaterial );
-        for ( let i = 0; i < 20; i ++ ) {
+                    const material = new DepthPeelMaterial();
+                    material.copy( c.material );
+                    material.opacity = 0.5;
+                    material.transparent = true;
+                    c.material = material;
 
-            const mesh = new THREE.Mesh( sphereGeometry, new DepthPeelMaterial( {
-                opacity: Math.random() * 0.5 + 0.25,
-                transparent: true,
-                depthWrite: false,
-            } ) );
+                    if ( c.material.color.r > 0.8 && c.material.color.g < 0.4 && c.material.color.b < 0.4 ) {
 
-            mesh.material.color.setHSL( Math.random(), 1, 0.5 );
-            mesh.position.random();
-            mesh.position.x -= 0.5;
-            mesh.position.y -= 0.5;
-            mesh.position.z -= 0.5;
-            mesh.position.multiplyScalar( 2 );
-            mesh.scale.setScalar( Math.random() * 0.5 + 0.25 );
-            transparentGroup.add( mesh );
+                        material.opacity = 1;
+                        material.transparent = false;
+                        material.emissive.copy( material.color );
+                        material.emissiveIntensity = 0.5;
+                        opaqueObjects.push( c );
 
-            mesh.material.needsUpdate = true;
+                    }
 
-        }
+                }
 
-    }
+            } );
+
+            opaqueObjects.forEach( c => opaqueGroup.attach( c ) );
+
+            transparentGroup.add( gltf.scene );
+
+        } );
 
     const gui = new GUI();
     gui.add( params, 'useDepthPeeling' );
     gui.add( params, 'doubleSided' );
+    gui.add( params, 'opacity', 0, 1 );
     gui.add( params, 'layers', 1, 10, 1 );
 
     window.addEventListener( 'resize', onWindowResize );
@@ -154,7 +167,7 @@ function onWindowResize() {
 //
 function animate() {
 
-    window.RENDERER = renderer;
+    controls.update();
     renderer.info.autoReset = false;
 
     if ( params.useDepthPeeling ) {
@@ -183,6 +196,7 @@ function render() {
             material.nearDepth = null;
             material.blending = THREE.NormalBlending;
             material.depthWrite = false;
+            material.opacity = params.opacity;
 
         }
 
@@ -250,6 +264,7 @@ function depthPeelRender() {
                 material.blendDst = THREE.ZeroFactor;
                 material.blendSrc = THREE.OneFactor;
                 material.depthWrite = true;
+                material.opacity = params.opacity;
                 material.side = params.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
 
                 renderer.getDrawingBufferSize( material.resolution );

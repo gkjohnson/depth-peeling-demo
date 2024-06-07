@@ -167,8 +167,7 @@ function animate() {
 
     }
 
-    // console.log( 'Draw Calls:', renderer.info.render.calls );
-    info.innerText = `Draw Calls: ${ renderer.info.render.calls }`;
+    infoContainer.innerText = `Draw Calls: ${ renderer.info.render.calls }`;
     renderer.info.reset();
 
 }

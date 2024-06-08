@@ -10,3 +10,4 @@ Drone model by [T Flex CAD on SketchFab](https://sketchfab.com/3d-models/drone-c
 
 **TODO**
 - Try stenciling the model area to see if performance improves with lots of layers
+- Composite into a common buffer on every layer render

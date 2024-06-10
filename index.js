@@ -240,6 +240,8 @@ function render() {
             material.blending = THREE.NormalBlending;
             material.depthWrite = false;
             material.opacity = params.opacity;
+            material.side = params.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
+            material.forceSinglePass = false;
 
         }
 
@@ -315,6 +317,7 @@ function depthPeelRender() {
                 material.depthWrite = true;
                 material.opacity = params.opacity;
                 material.side = params.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
+                material.forceSinglePass = true;
 
                 renderer.getDrawingBufferSize( material.resolution );
 

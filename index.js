@@ -16,6 +16,10 @@ let infoContainer;
 const clearColor = new THREE.Color();
 const layers = [];
 
+let frameTime = 0;
+let frameSamples = 0;
+let lastFrameStart = - 1;
+
 const SAMPLES = 0;
 const DEPTH_BUFFER = true;
 const COLOR_SPACE = THREE.SRGBColorSpace;
@@ -210,6 +214,25 @@ function onWindowResize() {
 //
 function animate() {
 
+    let frameDelta;
+    if ( lastFrameStart === - 1 ) {
+
+        lastFrameStart = window.performance.now();
+
+    } else {
+
+        frameDelta = window.performance.now() - lastFrameStart;
+        frameTime += ( frameDelta - frameTime ) / ( frameSamples + 1 );
+        if ( frameSamples < 60 ) {
+        
+            frameSamples ++
+
+        }
+
+        lastFrameStart = window.performance.now();
+
+    }
+
     controls.update();
     renderer.info.autoReset = false;
 
@@ -223,7 +246,10 @@ function animate() {
 
     }
 
-    infoContainer.innerText = `Draw Calls: ${ renderer.info.render.calls }`;
+    infoContainer.innerText = 
+        `Draw Calls: ${ renderer.info.render.calls }\n` +
+        `Frame Time: ${ frameTime.toFixed( 2 ) }ms\n` +
+        `FPS       : ${ ( 1000 / frameTime ).toFixed( 2 ) }`;
     renderer.info.reset();
 
 }

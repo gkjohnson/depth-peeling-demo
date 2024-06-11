@@ -13,3 +13,4 @@ Drone model by [T Flex CAD on SketchFab](https://sketchfab.com/3d-models/drone-c
 - Composite into a common buffer on every layer render
 - Perform a depth prepass per layer to avoid discarding expensive fragments
 - Limit render viewport to avoid copying and blending of of unused pixels
+- Add an epsilon to reduce z fighting on depth comparisons on certain hardware

@@ -495,7 +495,7 @@ function DepthPeelMaterialMixin( baseMaterial ) {
 
                         #if ! FIRST_PASS
 
-                        if ( texture2D( nearDepth, screenUV ).r >= gl_FragCoord.z * ( 1.0 - 1e-7 ) ) {
+                        if ( texture2D( nearDepth, screenUV ).r >= gl_FragCoord.z - 1e-6 ) {
 
                             discard;
 

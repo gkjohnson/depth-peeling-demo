@@ -1,12 +1,16 @@
 # depth-peeling-demo
 
-Demonstration of [depth peeling](https://developer.download.nvidia.com/assets/gamedev/docs/OrderIndependentTransparency.pdf) in three.js in support for adding re-assignable depth buffers for render targets.
+Demonstration of [depth peeling](https://developer.download.nvidia.com/assets/gamedev/docs/OrderIndependentTransparency.pdf) for transparency improved rendering in three.js using re-assignable depth buffers for render targets.
 
 [Robot demo here](https://gkjohnson.github.io/depth-peeling-demo/)
 
 [Drone CAD demo here](https://gkjohnson.github.io/depth-peeling-demo/#drone)
 
-![](./banner.png)
+<div align="center">
+<img src="./banner.png" />
+
+<i>Transparent model rendered with depth peeling.</i>
+</div>
 
 **Model Attributions**
 
